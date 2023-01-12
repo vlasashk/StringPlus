@@ -1,0 +1,1 @@
+https://github.com/XmasApple/s21_string.h/blob/master/src/s21_sscanf.c
