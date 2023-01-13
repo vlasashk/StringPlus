@@ -107,7 +107,7 @@ int process_d(char **strPointer, specInfo *specs, va_list paramList) {
   int flag = 0;
   long long result = 0;
   if (**strPointer) {
-    if ((flag = scanf_atoi(strPointer, specs->widthArg, &result) == 1)) {
+    if ((flag = scanf_atoi(strPointer, specs->widthArg, &result)) == 1) {
       if (specs->skip != 1) {
         switch (specs->lenArg) {
         case 'h':
@@ -134,11 +134,11 @@ int scanf_atoi(char **str, int width, long long *result) {
   if (width == 0) {
     width = INT_MAX;
   }
-  long long res = 0;
   int flag = 0;
   str += s21_strspn(*str, TRIM);
   int coef = check_operator(str, &width);
   if (**str >= '0' && **str <= '9' && width > 0) {
+    long long res = 0;
     flag = 1;
     while (**str >= '0' && **str <= '9' && width > 0) {
       if ((LLONG_MAX - (**str - '0')) / 10 >= res) {
@@ -173,12 +173,12 @@ int check_operator(char **str, int *width) {
   int coef = 1;
   if (**str == '+') {
     (*str)++;
-    width--;
+    (*width)--;
   }
   if (**str == '-') {
     coef = -1;
     (*str)++;
-    width--;
+    (*width)--;
   }
   return coef;
 }

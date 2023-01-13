@@ -11,7 +11,7 @@ int main() {
   long int w = 0;
   int gop = 0;
   // int ch = 0;
-  int res = s21_sscanf(line, "%ld \t\t%s %3d", &w, hel, &gop);
+  int res = s21_sscanf(line, "%Ld \t\t%s %3d", &w, hel, &gop);
   printf("%ld|\n%s|\n%d|\n", w, hel, gop);
   printf("res: %d\n", res);
   return 0;
