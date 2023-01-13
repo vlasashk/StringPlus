@@ -14,7 +14,8 @@ test:  Tests/test.o s21_string.a
 s21_string.a: $(OBJECTS)
 	ar rcs s21_string.a $(OBJECTS)
 
-rebuild: clean all
+rebuild: clean all 
+	./test
 
 valgrind:
 	valgrind --trace-children=yes --track-fds=yes --track-origins=yes --leak-check=full --show-leak-kinds=all ./test

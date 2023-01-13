@@ -12,7 +12,6 @@ int s21_sscanf(const char *str, const char *format, ...) {
   char *strPointer = (char *)str;
   va_list paramList;
   va_start(paramList, format);
-
   while (*formatPointer && *strPointer) {
     formatPointer = trim_start(formatPointer);
     strPointer = trim_start(strPointer);
@@ -21,7 +20,7 @@ int s21_sscanf(const char *str, const char *format, ...) {
       specInfo specs = {0};
       if (*formatPointer != '%') {
         if (spec_parse(&formatPointer, &specs) != 0) {
-          if (spec_processing(&strPointer, &specs, paramList) == 1) {
+          if (spec_processing(&strPointer, &specs, paramList, str) == 1) {
             res += specs.success;
           } else {
             break;
@@ -50,39 +49,8 @@ int s21_sscanf(const char *str, const char *format, ...) {
   return res;
 }
 
-int process_s(char **strPointer, specInfo *specs, va_list paramList) {
-  int res = 1;
-  if (**strPointer) {
-    if (specs->widthArg == 0) {
-      specs->widthArg = INT_MAX;
-    }
-    char *temp = va_arg(paramList, char *);
-    while (**strPointer && specs->widthArg > 0 && **strPointer != ' ') {
-      *temp++ = **strPointer;
-      (*strPointer)++;
-      specs->widthArg--;
-    }
-    *temp = '\0';
-    specs->success = 1;
-  } else {
-    res = 0;
-  }
-  return res;
-}
-
-int process_c(char **strPointer, specInfo *specs, va_list paramList) {
-  int res = 1;
-  if (**strPointer) {
-    *(va_arg(paramList, char *)) = **strPointer;
-    (*strPointer)++;
-    specs->success = 1;
-  } else {
-    res = 0;
-  }
-  return res;
-}
-
-int spec_processing(char **strPointer, specInfo *specs, va_list paramList) {
+int spec_processing(char **strPointer, specInfo *specs, va_list paramList,
+                    const char *str) {
   int res = 0;
   if (**strPointer) {
     switch (specs->specArg) {
@@ -92,6 +60,9 @@ int spec_processing(char **strPointer, specInfo *specs, va_list paramList) {
       }
       break;
     case 'd':
+      if (process_d(strPointer, specs, paramList) == 1) {
+        res = 1;
+      }
       break;
     case 'i':
       break;
@@ -121,10 +92,148 @@ int spec_processing(char **strPointer, specInfo *specs, va_list paramList) {
     case 'p':
       break;
     case 'n':
+      if (process_n(strPointer, specs, paramList, str) == 1) {
+        res = 1;
+      }
       break;
     default:
       break;
     }
+  }
+  return res;
+}
+
+int process_d(char **strPointer, specInfo *specs, va_list paramList) {
+  int flag = 0;
+  long long result = 0;
+  if (**strPointer) {
+    if ((flag = scanf_atoi(strPointer, specs->widthArg, &result) == 1)) {
+      if (specs->skip != 1) {
+        switch (specs->lenArg) {
+        case 'h':
+          *(va_arg(paramList, short *)) = (short)result;
+          break;
+        case 'l':
+          *(va_arg(paramList, long *)) = (long)result;
+          break;
+        case 'L':
+          *(va_arg(paramList, long long *)) = (long long)result;
+          break;
+        default:
+          *(va_arg(paramList, int *)) = (int)result;
+          break;
+        }
+        specs->success = 1;
+      }
+    }
+  }
+  return flag;
+}
+
+int scanf_atoi(char **str, int width, long long *result) {
+  if (width == 0) {
+    width = INT_MAX;
+  }
+  long long res = 0;
+  int flag = 0;
+  str += s21_strspn(*str, TRIM);
+  int coef = check_operator(str, &width);
+  if (**str >= '0' && **str <= '9' && width > 0) {
+    flag = 1;
+    while (**str >= '0' && **str <= '9' && width > 0) {
+      if ((LLONG_MAX - (**str - '0')) / 10 >= res) {
+        res = res * 10 + (**str - '0');
+        (*str)++;
+        width--;
+      } else {
+        if (coef == -1) {
+          if ((LLONG_MIN + (**str - '0')) / 10 < -res) {
+            res = LLONG_MIN + 1;
+          } else {
+            res = LLONG_MIN;
+          }
+          coef = 1;
+        } else {
+          res = LLONG_MAX;
+        }
+        while (**str >= '0' && **str <= '9' && width > 0) {
+          (*str)++;
+          width--;
+        }
+        break;
+      }
+    }
+    res *= coef;
+    *result = res;
+  }
+  return flag;
+}
+
+int check_operator(char **str, int *width) {
+  int coef = 1;
+  if (**str == '+') {
+    (*str)++;
+    width--;
+  }
+  if (**str == '-') {
+    coef = -1;
+    (*str)++;
+    width--;
+  }
+  return coef;
+}
+
+int process_s(char **strPointer, specInfo *specs, va_list paramList) {
+  int res = 1;
+  if (**strPointer && specs->lenArg == '0') {
+    if (specs->widthArg == 0) {
+      specs->widthArg = INT_MAX;
+    }
+    if (specs->skip != 1) {
+      char *temp = va_arg(paramList, char *);
+      while (**strPointer && specs->widthArg > 0 && **strPointer != ' ') {
+        *temp++ = **strPointer;
+        (*strPointer)++;
+        specs->widthArg--;
+      }
+      *temp = '\0';
+      specs->success = 1;
+    } else {
+      while (**strPointer && specs->widthArg > 0 && **strPointer != ' ') {
+        (*strPointer)++;
+        specs->widthArg--;
+      }
+    }
+  } else {
+    res = 0;
+  }
+  return res;
+}
+
+int process_c(char **strPointer, specInfo *specs, va_list paramList) {
+  int res = 1;
+  if (**strPointer && specs->lenArg == '0') {
+    if (specs->skip != 1) {
+      *(va_arg(paramList, char *)) = **strPointer;
+      specs->success = 1;
+    }
+    (*strPointer)++;
+  } else {
+    res = 0;
+  }
+  return res;
+}
+
+int process_n(char **strPointer, specInfo *specs, va_list paramList,
+              const char *str) {
+  int res = 0;
+  if (**strPointer && specs->lenArg == '0') {
+    if (specs->skip != 1) {
+      *(va_arg(paramList, int *)) = *strPointer - str;
+      specs->success = 1;
+    }
+  } else {
+    res = 0;
   }
   return res;
 }

@@ -1,7 +1,7 @@
 #ifndef SRC_S21_STRING_H_
 #define SRC_S21_STRING_H_
 
-//#include <float.h>
+#include <float.h>
 #include <limits.h>
 #include <math.h>
 #include <stdarg.h>
