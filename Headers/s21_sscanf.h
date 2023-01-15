@@ -27,6 +27,12 @@ int process_n(char **strPointer, specInfo *specs, va_list paramList,
               const char *str);
 int process_d(char **strPointer, specInfo *specs, va_list paramList);
 int scanf_atoi(char **str, int width, long long *result);
+int scanf_atold(char **str, int width, long double *result);
 int check_operator(char **str, int *width);
+int process_float(char **strPointer, specInfo *specs, va_list paramList);
+char lower_char(char c);
+int scan_nan_inf(char *str, char *comp, int abort, int *width);
+int inf_or_nan(char **str, long double *result, int *width);
+long double atold_process(char **str, int *width);
 
 #endif //  SRC_HEADERS_S21_SSCANF_H_

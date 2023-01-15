@@ -67,14 +67,29 @@ int spec_processing(char **strPointer, specInfo *specs, va_list paramList,
     case 'i':
       break;
     case 'e':
+      if (process_float(strPointer, specs, paramList) == 1) {
+        res = 1;
+      }
       break;
     case 'E':
+      if (process_float(strPointer, specs, paramList) == 1) {
+        res = 1;
+      }
       break;
     case 'f':
+      if (process_float(strPointer, specs, paramList) == 1) {
+        res = 1;
+      }
       break;
     case 'g':
+      if (process_float(strPointer, specs, paramList) == 1) {
+        res = 1;
+      }
       break;
     case 'G':
+      if (process_float(strPointer, specs, paramList) == 1) {
+        res = 1;
+      }
       break;
     case 'o':
       break;
@@ -103,6 +118,110 @@ int spec_processing(char **strPointer, specInfo *specs, va_list paramList,
   return res;
 }
 
+int process_float(char **strPointer, specInfo *specs, va_list paramList) {
+  int flag = 0;
+  long double result = 0;
+  if (**strPointer) {
+    if ((flag = scanf_atold(strPointer, specs->widthArg, &result)) == 1) {
+      if (specs->skip != 1) {
+        switch (specs->lenArg) {
+        case 'h':
+          flag = 0;
+          break;
+        case 'l':
+          *(va_arg(paramList, double *)) = (double)result;
+          break;
+        case 'L':
+          *(va_arg(paramList, long double *)) = result;
+          break;
+        default:
+          *(va_arg(paramList, float *)) = (float)result;
+          break;
+        }
+        specs->success = 1;
+      }
+    }
+  }
+  return flag;
+}
+
+int scanf_atold(char **str, int width, long double *result) {
+  if (width == 0) {
+    width = INT_MAX;
+  }
+  long double res = 0;
+  int flag = 0;
+  str += s21_strspn(*str, TRIM);
+  int coef = check_operator(str, &width);
+  if (inf_or_nan(str, &res, &width) == 1) {
+    flag = 1;
+  } else if (((**str >= '0' && **str <= '9') || **str == '.') && width > 0) {
+    flag = 1;
+    if (**str == '.') {
+      flag = 0;
+      char *pointer = *str;
+      pointer++;
+      if (*pointer >= '0' && *pointer <= '9') {
+        flag = 1;
+      }
+    }
+    if (flag == 1) {
+      res = atold_process(str, &width);
+    }
+  }
+  res *= coef;
+  *result = res;
+  return flag;
+}
+
+long double atold_process(char **str, int *width) {
+  long double res = 0;
+  long double frac = 0.0;
+  while (**str >= '0' && **str <= '9' && *width > 0) {
+    res = res * 10 + (**str - '0');
+    (*str)++;
+    (*width)--;
+  }
+  if (**str == '.') {
+    (*str)++;
+    int frac_pow = 1;
+    while (**str >= '0' && **str <= '9' && *width > 0) {
+      frac += (long double)(**str - '0') / powl(10., frac_pow++);
+      (*str)++;
+      (*width)--;
+    }
+    res += frac;
+  }
+  return res;
+}
+
+int process_s(char **strPointer, specInfo *specs, va_list paramList) {
+  int res = 1;
+  if (**strPointer && specs->lenArg == '0') {
+    if (specs->widthArg == 0) {
+      specs->widthArg = INT_MAX;
+    }
+    if (specs->skip != 1) {
+      char *temp = va_arg(paramList, char *);
+      while (**strPointer && specs->widthArg > 0 && **strPointer != ' ') {
+        *temp++ = **strPointer;
+        (*strPointer)++;
+        specs->widthArg--;
+      }
+      *temp = '\0';
+      specs->success = 1;
+    } else {
+      while (**strPointer && specs->widthArg > 0 && **strPointer != ' ') {
+        (*strPointer)++;
+        specs->widthArg--;
+      }
+    }
+  } else {
+    res = 0;
+  }
+  return res;
+}
+
 int process_d(char **strPointer, specInfo *specs, va_list paramList) {
   int flag = 0;
   long long result = 0;
@@ -117,7 +236,7 @@ int process_d(char **strPointer, specInfo *specs, va_list paramList) {
           *(va_arg(paramList, long *)) = (long)result;
           break;
         case 'L':
-          *(va_arg(paramList, long long *)) = (long long)result;
+          *(va_arg(paramList, long long *)) = result;
           break;
         default:
           *(va_arg(paramList, int *)) = (int)result;
@@ -128,6 +247,34 @@ int process_d(char **strPointer, specInfo *specs, va_list paramList) {
     }
   }
   return flag;
+}
+
+int process_c(char **strPointer, specInfo *specs, va_list paramList) {
+  int res = 1;
+  if (**strPointer && specs->lenArg == '0') {
+    if (specs->skip != 1) {
+      *(va_arg(paramList, char *)) = **strPointer;
+      specs->success = 1;
+    }
+    (*strPointer)++;
+  } else {
+    res = 0;
+  }
+  return res;
+}
+
+int process_n(char **strPointer, specInfo *specs, va_list paramList,
+              const char *str) {
+  int res = 0;
+  if (**strPointer && specs->lenArg == '0') {
+    if (specs->skip != 1) {
+      *(va_arg(paramList, int *)) = *strPointer - str;
+      specs->success = 1;
+    }
+  } else {
+    res = 0;
+  }
+  return res;
 }
 
 int scanf_atoi(char **str, int width, long long *result) {
@@ -183,57 +330,92 @@ int check_operator(char **str, int *width) {
   return coef;
 }
 
-int process_s(char **strPointer, specInfo *specs, va_list paramList) {
+char lower_char(char c) {
+  char res = c;
+  if (c >= 'A' && c <= 'Z') {
+    res += 32;
+  }
+  return res;
+}
+int scan_nan_inf(char *str, char *comp, int abort, int *width) {
   int res = 1;
-  if (**strPointer && specs->lenArg == '0') {
-    if (specs->widthArg == 0) {
-      specs->widthArg = INT_MAX;
-    }
-    if (specs->skip != 1) {
-      char *temp = va_arg(paramList, char *);
-      while (**strPointer && specs->widthArg > 0 && **strPointer != ' ') {
-        *temp++ = **strPointer;
-        (*strPointer)++;
-        specs->widthArg--;
+  char cmp;
+  if (str) {
+    while (abort != 0 && *width != 0) {
+      cmp = lower_char(*str);
+      if (cmp != *comp) {
+        res = 0;
+        break;
       }
-      *temp = '\0';
-      specs->success = 1;
+      abort--;
+      str++;
+      comp++;
+      (*width)--;
+    }
+    if (*width == 0 && abort != 0) {
+      res = 0;
+    }
+  } else {
+    res = 0;
+  }
+  return res;
+}
+
+int inf_or_nan(char **str, long double *result, int *width) {
+  int res = 1;
+  int abort;
+  char *local_s = *str;
+  int local_width = *width;
+  char *nan_str = "nan";
+  char *inf_str = "inf";
+  char *inf_full = "infinity";
+  char cmp = lower_char(*local_s);
+  switch (cmp) {
+  case 'n':
+    local_s++;
+    local_width--;
+    nan_str++;
+    abort = 2;
+    if ((res = scan_nan_inf(local_s, nan_str, abort, &local_width)) == 1) {
+      (*str) += 3;
+      *width = local_width;
+      *result = NAN;
+    }
+    break;
+  case 'i':
+    local_s++;
+    local_width--;
+    inf_str++;
+    inf_full++;
+    abort = 2;
+    if (scan_nan_inf(local_s, inf_str, abort, &local_width) == 1) {
+
+      local_s += abort;
+      inf_full += abort;
+      cmp = lower_char(*local_s);
+      if (local_width == 0) {
+        (*str) += 3;
+        *width = local_width;
+        *result = INFINITY;
+      } else if (cmp == 'i') {
+        abort = 5;
+        if ((res = scan_nan_inf(local_s, inf_full, abort, &local_width)) == 1) {
+          (*str) += 8;
+          *width = local_width;
+          *result = INFINITY;
+        }
+      } else {
+        (*str) += 3;
+        *width = local_width;
+        *result = INFINITY;
+      }
     } else {
-      while (**strPointer && specs->widthArg > 0 && **strPointer != ' ') {
-        (*strPointer)++;
-        specs->widthArg--;
-      }
+      res = 0;
     }
-  } else {
+    break;
+  default:
     res = 0;
-  }
-  return res;
-}
-
-int process_c(char **strPointer, specInfo *specs, va_list paramList) {
-  int res = 1;
-  if (**strPointer && specs->lenArg == '0') {
-    if (specs->skip != 1) {
-      *(va_arg(paramList, char *)) = **strPointer;
-      specs->success = 1;
-    }
-    (*strPointer)++;
-  } else {
-    res = 0;
-  }
-  return res;
-}
-
-int process_n(char **strPointer, specInfo *specs, va_list paramList,
-              const char *str) {
-  int res = 0;
-  if (**strPointer && specs->lenArg == '0') {
-    if (specs->skip != 1) {
-      *(va_arg(paramList, int *)) = *strPointer - str;
-      specs->success = 1;
-    }
-  } else {
-    res = 0;
+    break;
   }
   return res;
 }
