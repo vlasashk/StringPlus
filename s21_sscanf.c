@@ -55,73 +55,49 @@ int spec_processing(char **strPointer, specInfo *specs, va_list paramList,
   if (**strPointer) {
     switch (specs->specArg) {
     case 'c':
-      if (process_c(strPointer, specs, paramList) == 1) {
-        res = 1;
-      }
+      res = process_c(strPointer, specs, paramList);
       break;
     case 'd':
-      if (process_d(strPointer, specs, paramList) == 1) {
-        res = 1;
-      }
+      res = process_d(strPointer, specs, paramList);
       break;
     case 'i':
+      res = process_i(strPointer, specs, paramList);
       break;
     case 'e':
-      if (process_float(strPointer, specs, paramList) == 1) {
-        res = 1;
-      }
+      res = process_float(strPointer, specs, paramList);
       break;
     case 'E':
-      if (process_float(strPointer, specs, paramList) == 1) {
-        res = 1;
-      }
+      res = process_float(strPointer, specs, paramList);
       break;
     case 'f':
-      if (process_float(strPointer, specs, paramList) == 1) {
-        res = 1;
-      }
+      res = process_float(strPointer, specs, paramList);
       break;
     case 'g':
-      if (process_float(strPointer, specs, paramList) == 1) {
-        res = 1;
-      }
+      res = process_float(strPointer, specs, paramList);
       break;
     case 'G':
-      if (process_float(strPointer, specs, paramList) == 1) {
-        res = 1;
-      }
+      res = process_float(strPointer, specs, paramList);
       break;
     case 'o':
-      if (process_unsigned(strPointer, specs, paramList, 8) == 1) {
-        res = 1;
-      }
+      res = process_unsigned(strPointer, specs, paramList, 8);
       break;
     case 's':
-      if (process_s(strPointer, specs, paramList) == 1) {
-        res = 1;
-      }
+      res = process_s(strPointer, specs, paramList);
       break;
     case 'u':
-      if (process_unsigned(strPointer, specs, paramList, 10) == 1) {
-        res = 1;
-      }
+      res = process_unsigned(strPointer, specs, paramList, 10);
       break;
     case 'x':
-      if (process_unsigned(strPointer, specs, paramList, 16) == 1) {
-        res = 1;
-      }
+      res = process_unsigned(strPointer, specs, paramList, 16);
       break;
     case 'X':
-      if (process_unsigned(strPointer, specs, paramList, 16) == 1) {
-        res = 1;
-      }
+      res = process_unsigned(strPointer, specs, paramList, 16);
       break;
     case 'p':
+      res = process_unsigned(strPointer, specs, paramList, 16);
       break;
     case 'n':
-      if (process_n(strPointer, specs, paramList, str) == 1) {
-        res = 1;
-      }
+      res = process_n(strPointer, specs, paramList, str);
       break;
     default:
       break;
@@ -130,6 +106,91 @@ int spec_processing(char **strPointer, specInfo *specs, va_list paramList,
   return res;
 }
 
+int process_i(char **strPointer, specInfo *specs, va_list paramList) {
+  int flag = 0;
+  long long result = 0;
+  if (**strPointer) {
+    if (specs->widthArg == 0) {
+      specs->widthArg = INT_MAX;
+    }
+    if ((flag = any_numeral(strPointer, specs->widthArg, &result)) == 1) {
+      if (specs->skip != 1) {
+        switch (specs->lenArg) {
+        case 'h':
+          *(va_arg(paramList, short *)) = (short)result;
+          break;
+        case 'l':
+          *(va_arg(paramList, long *)) = (long)result;
+          break;
+        case 'L':
+          *(va_arg(paramList, long long *)) = result;
+          break;
+        default:
+          *(va_arg(paramList, int *)) = (int)result;
+          break;
+        }
+        specs->success = 1;
+      }
+    }
+  }
+  return flag;
+}
+
+int any_numeral(char **str, int width, long long *result) {
+  int flag = 0;
+  long long res = 0;
+  int zero_stat = 0;
+  str += s21_strspn(*str, TRIM);
+  int coef = check_operator(str, &width);
+  int base = trim_hex_start(str, &width, &zero_stat);
+  char *sign_check = *str;
+  sign_check++;
+  if (zero_stat == 1) {
+    flag = 1;
+    res = 0;
+  } else if (base_check(**str, base) && width > 0 && *sign_check != '-' &&
+             *sign_check != '+') {
+    flag = scanf_atoi(str, width, &res, base, coef);
+  }
+  *result = res;
+  return flag;
+}
+
+int scanf_atoi(char **str, int width, long long *result, int base, int coef) {
+  int flag = 0;
+  if (base_check(**str, base) && width > 0) {
+    long long res = 0;
+    flag = 1;
+    int converted = 0;
+    while (base_check(**str, base) && width > 0) {
+      converted = base_convert(**str, base);
+      if ((LLONG_MAX - converted) / base >= res) {
+        res = res * base + converted;
+        (*str)++;
+        width--;
+      } else {
+        if (coef == -1) {
+          if ((LLONG_MIN + converted) / base < -res) {
+            res = LLONG_MIN + 1;
+          } else {
+            res = LLONG_MIN;
+          }
+          coef = 1;
+        } else {
+          res = LLONG_MAX;
+        }
+        while (base_check(**str, base) && width > 0) {
+          (*str)++;
+          width--;
+        }
+        break;
+      }
+    }
+    res *= coef;
+    *result = res;
+  }
+  return flag;
+}
 int process_unsigned(char **strPointer, specInfo *specs, va_list paramList,
                      int base) {
   int flag = 0;
@@ -166,11 +227,15 @@ int s21_strtoull(char **str, int width, unsigned long long *result, int base) {
   int flag = 0;
   str += s21_strspn(*str, TRIM);
   int coef = check_operator(str, &width);
+  int zero_stat = 0;
+  unsigned long long res = 0;
   if (base == 16) {
-    trim_hex_start(str, &width);
+    trim_hex_start(str, &width, &zero_stat);
   }
-  if (base_check(**str, base) && width > 0) {
-    unsigned long long res = 0;
+  if (zero_stat == 1) {
+    flag = 1;
+    res = 0;
+  } else if (base_check(**str, base) && width > 0) {
     flag = 1;
     int converted = 0;
     while (base_check(**str, base) && width > 0) {
@@ -188,23 +253,33 @@ int s21_strtoull(char **str, int width, unsigned long long *result, int base) {
         break;
       }
     }
-    res *= coef;
-    *result = res;
   }
+  res *= coef;
+  *result = res;
   return flag;
 }
-void trim_hex_start(char **str, int *width) {
+
+int trim_hex_start(char **str, int *width, int *zero_stat) {
+  int res = 10;
+  int local_width = *width;
   char *pointer = *str;
-  if (*pointer == '0') {
+  if (*pointer == '0' && local_width > 0) {
     pointer++;
-    if (*pointer == 'x' || *pointer == 'X') {
+    local_width--;
+    res = 8;
+    if ((*pointer == 'x' || *pointer == 'X') && local_width > 0) {
       pointer++;
-      if (base_check(*pointer, 16)) {
+      res = 16;
+      if (base_check(*pointer, 16) || *pointer == ' ') {
         (*str) += 2;
         (*width) -= 2;
+        if (*pointer == ' ') {
+          *zero_stat = 1;
+        }
       }
     }
   }
+  return res;
 }
 
 int base_convert(char c, int base) {
@@ -308,7 +383,10 @@ int process_d(char **strPointer, specInfo *specs, va_list paramList) {
     if (specs->widthArg == 0) {
       specs->widthArg = INT_MAX;
     }
-    if ((flag = scanf_atoi(strPointer, specs->widthArg, &result)) == 1) {
+    strPointer += s21_strspn(*strPointer, TRIM);
+    int coef = check_operator(strPointer, &specs->widthArg);
+    if ((flag = scanf_atoi(strPointer, specs->widthArg, &result, 10, coef)) ==
+        1) {
       if (specs->skip != 1) {
         switch (specs->lenArg) {
         case 'h':
@@ -414,46 +492,12 @@ void handle_exp(char **str, int *width, long double *res) {
   if (**str == 'e' || **str == 'E') {
     (*str)++;
     (*width)--;
-    if (scanf_atoi(str, *width, &exp) == 1) {
+    str += s21_strspn(*str, TRIM);
+    int coef = check_operator(str, width);
+    if (scanf_atoi(str, *width, &exp, 10, coef) == 1) {
       *res *= powl(10.0, (long double)exp);
     }
   }
-}
-
-int scanf_atoi(char **str, int width, long long *result) {
-  int flag = 0;
-  str += s21_strspn(*str, TRIM);
-  int coef = check_operator(str, &width);
-  if (**str >= '0' && **str <= '9' && width > 0) {
-    long long res = 0;
-    flag = 1;
-    while (**str >= '0' && **str <= '9' && width > 0) {
-      if ((LLONG_MAX - (**str - '0')) / 10 >= res) {
-        res = res * 10 + (**str - '0');
-        (*str)++;
-        width--;
-      } else {
-        if (coef == -1) {
-          if ((LLONG_MIN + (**str - '0')) / 10 < -res) {
-            res = LLONG_MIN + 1;
-          } else {
-            res = LLONG_MIN;
-          }
-          coef = 1;
-        } else {
-          res = LLONG_MAX;
-        }
-        while (**str >= '0' && **str <= '9' && width > 0) {
-          (*str)++;
-          width--;
-        }
-        break;
-      }
-    }
-    res *= coef;
-    *result = res;
-  }
-  return flag;
 }
 
 int check_operator(char **str, int *width) {

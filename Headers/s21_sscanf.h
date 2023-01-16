@@ -26,7 +26,7 @@ int process_s(char **strPointer, specInfo *specs, va_list paramList);
 int process_n(char **strPointer, specInfo *specs, va_list paramList,
               const char *str);
 int process_d(char **strPointer, specInfo *specs, va_list paramList);
-int scanf_atoi(char **str, int width, long long *result);
+int scanf_atoi(char **str, int width, long long *result, int base, int coef);
 int scanf_atold(char **str, int width, long double *result);
 int check_operator(char **str, int *width);
 int process_float(char **strPointer, specInfo *specs, va_list paramList);
@@ -40,6 +40,8 @@ int process_unsigned(char **strPointer, specInfo *specs, va_list paramList,
 int s21_strtoull(char **str, int width, unsigned long long *result, int base);
 int base_check(char c, int base);
 int base_convert(char c, int base);
-void trim_hex_start(char **str, int *width);
+int trim_hex_start(char **str, int *width, int *zero_stat);
+int any_numeral(char **str, int width, long long *result);
+int process_i(char **strPointer, specInfo *specs, va_list paramList);
 
 #endif //  SRC_HEADERS_S21_SSCANF_H_
