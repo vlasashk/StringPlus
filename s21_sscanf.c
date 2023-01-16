@@ -92,6 +92,9 @@ int spec_processing(char **strPointer, specInfo *specs, va_list paramList,
       }
       break;
     case 'o':
+      if (process_unsigned(strPointer, specs, paramList, 8) == 1) {
+        res = 1;
+      }
       break;
     case 's':
       if (process_s(strPointer, specs, paramList) == 1) {
@@ -99,10 +102,19 @@ int spec_processing(char **strPointer, specInfo *specs, va_list paramList,
       }
       break;
     case 'u':
+      if (process_unsigned(strPointer, specs, paramList, 10) == 1) {
+        res = 1;
+      }
       break;
     case 'x':
+      if (process_unsigned(strPointer, specs, paramList, 16) == 1) {
+        res = 1;
+      }
       break;
     case 'X':
+      if (process_unsigned(strPointer, specs, paramList, 16) == 1) {
+        res = 1;
+      }
       break;
     case 'p':
       break;
@@ -118,10 +130,125 @@ int spec_processing(char **strPointer, specInfo *specs, va_list paramList,
   return res;
 }
 
+int process_unsigned(char **strPointer, specInfo *specs, va_list paramList,
+                     int base) {
+  int flag = 0;
+  unsigned long long result = 0;
+  if (**strPointer) {
+    if (specs->widthArg == 0) {
+      specs->widthArg = INT_MAX;
+    }
+    if ((flag = s21_strtoull(strPointer, specs->widthArg, &result, base)) ==
+        1) {
+      if (specs->skip != 1) {
+        switch (specs->lenArg) {
+        case 'h':
+          *(va_arg(paramList, unsigned short *)) = (unsigned short)result;
+          break;
+        case 'l':
+          *(va_arg(paramList, unsigned long *)) = (unsigned long)result;
+          break;
+        case 'L':
+          *(va_arg(paramList, unsigned long long *)) = result;
+          break;
+        default:
+          *(va_arg(paramList, unsigned int *)) = (unsigned int)result;
+          break;
+        }
+        specs->success = 1;
+      }
+    }
+  }
+  return flag;
+}
+
+int s21_strtoull(char **str, int width, unsigned long long *result, int base) {
+  int flag = 0;
+  str += s21_strspn(*str, TRIM);
+  int coef = check_operator(str, &width);
+  if (base == 16) {
+    trim_hex_start(str, &width);
+  }
+  if (base_check(**str, base) && width > 0) {
+    unsigned long long res = 0;
+    flag = 1;
+    int converted = 0;
+    while (base_check(**str, base) && width > 0) {
+      converted = base_convert(**str, base);
+      if ((ULLONG_MAX - converted) / base >= res) {
+        res = res * base + converted;
+        (*str)++;
+        width--;
+      } else {
+        res = ULLONG_MAX;
+        while (base_check(**str, base) && width > 0) {
+          (*str)++;
+          width--;
+        }
+        break;
+      }
+    }
+    res *= coef;
+    *result = res;
+  }
+  return flag;
+}
+void trim_hex_start(char **str, int *width) {
+  char *pointer = *str;
+  if (*pointer == '0') {
+    pointer++;
+    if (*pointer == 'x' || *pointer == 'X') {
+      pointer++;
+      if (base_check(*pointer, 16)) {
+        (*str) += 2;
+        (*width) -= 2;
+      }
+    }
+  }
+}
+
+int base_convert(char c, int base) {
+  int res = 0;
+  if (base <= 10) {
+    res = c - '0';
+  } else {
+    if (c >= '0' && c <= '9') {
+      res = c - '0';
+    } else if (c >= 'A' && c <= 'F') {
+      res = c - 'A' + 10;
+    } else {
+      res = c - 'a' + 10;
+    }
+  }
+  return res;
+}
+
+int base_check(char c, int base) {
+  int res = 0;
+  if (base == 10) {
+    if (c >= '0' && c <= '9') {
+      res = 1;
+    }
+  } else if (base == 8) {
+    if (c >= '0' && c <= '7') {
+      res = 1;
+    }
+  } else {
+    if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') ||
+        (c >= 'a' && c <= 'f')) {
+      res = 1;
+    }
+  }
+  return res;
+}
+
 int process_float(char **strPointer, specInfo *specs, va_list paramList) {
   int flag = 0;
   long double result = 0;
   if (**strPointer) {
+    if (specs->widthArg == 0) {
+      specs->widthArg = INT_MAX;
+    }
     if ((flag = scanf_atold(strPointer, specs->widthArg, &result)) == 1) {
       if (specs->skip != 1) {
         switch (specs->lenArg) {
@@ -145,56 +272,6 @@ int process_float(char **strPointer, specInfo *specs, va_list paramList) {
   return flag;
 }
 
-int scanf_atold(char **str, int width, long double *result) {
-  if (width == 0) {
-    width = INT_MAX;
-  }
-  long double res = 0;
-  int flag = 0;
-  str += s21_strspn(*str, TRIM);
-  int coef = check_operator(str, &width);
-  if (inf_or_nan(str, &res, &width) == 1) {
-    flag = 1;
-  } else if (((**str >= '0' && **str <= '9') || **str == '.') && width > 0) {
-    flag = 1;
-    if (**str == '.') {
-      flag = 0;
-      char *pointer = *str;
-      pointer++;
-      if (*pointer >= '0' && *pointer <= '9') {
-        flag = 1;
-      }
-    }
-    if (flag == 1) {
-      res = atold_process(str, &width);
-    }
-  }
-  res *= coef;
-  *result = res;
-  return flag;
-}
-
-long double atold_process(char **str, int *width) {
-  long double res = 0;
-  long double frac = 0.0;
-  while (**str >= '0' && **str <= '9' && *width > 0) {
-    res = res * 10 + (**str - '0');
-    (*str)++;
-    (*width)--;
-  }
-  if (**str == '.') {
-    (*str)++;
-    int frac_pow = 1;
-    while (**str >= '0' && **str <= '9' && *width > 0) {
-      frac += (long double)(**str - '0') / powl(10., frac_pow++);
-      (*str)++;
-      (*width)--;
-    }
-    res += frac;
-  }
-  return res;
-}
-
 int process_s(char **strPointer, specInfo *specs, va_list paramList) {
   int res = 1;
   if (**strPointer && specs->lenArg == '0') {
@@ -203,7 +280,8 @@ int process_s(char **strPointer, specInfo *specs, va_list paramList) {
     }
     if (specs->skip != 1) {
       char *temp = va_arg(paramList, char *);
-      while (**strPointer && specs->widthArg > 0 && **strPointer != ' ') {
+      while (**strPointer && specs->widthArg > 0 &&
+             s21_strchr(TRIM, **strPointer) == s21_NULL) {
         *temp++ = **strPointer;
         (*strPointer)++;
         specs->widthArg--;
@@ -211,7 +289,8 @@ int process_s(char **strPointer, specInfo *specs, va_list paramList) {
       *temp = '\0';
       specs->success = 1;
     } else {
-      while (**strPointer && specs->widthArg > 0 && **strPointer != ' ') {
+      while (**strPointer && specs->widthArg > 0 &&
+             s21_strchr(TRIM, **strPointer) == s21_NULL) {
         (*strPointer)++;
         specs->widthArg--;
       }
@@ -226,6 +305,9 @@ int process_d(char **strPointer, specInfo *specs, va_list paramList) {
   int flag = 0;
   long long result = 0;
   if (**strPointer) {
+    if (specs->widthArg == 0) {
+      specs->widthArg = INT_MAX;
+    }
     if ((flag = scanf_atoi(strPointer, specs->widthArg, &result)) == 1) {
       if (specs->skip != 1) {
         switch (specs->lenArg) {
@@ -277,10 +359,68 @@ int process_n(char **strPointer, specInfo *specs, va_list paramList,
   return res;
 }
 
-int scanf_atoi(char **str, int width, long long *result) {
-  if (width == 0) {
-    width = INT_MAX;
+int scanf_atold(char **str, int width, long double *result) {
+  long double res = 0;
+  int flag = 0;
+  str += s21_strspn(*str, TRIM);
+  int coef = check_operator(str, &width);
+  if (inf_or_nan(str, &res, &width) == 1) {
+    flag = 1;
+  } else if (((**str >= '0' && **str <= '9') || **str == '.') && width > 0) {
+    flag = 1;
+    if (**str == '.') {
+      flag = 0;
+      char *pointer = *str;
+      pointer++;
+      if (*pointer >= '0' && *pointer <= '9') {
+        flag = 1;
+      }
+    }
+    if (flag == 1) {
+      res = atold_process(str, &width);
+      if (width > 0) {
+        handle_exp(str, &width, &res);
+      }
+    }
   }
+  res *= coef;
+  *result = res;
+  return flag;
+}
+
+long double atold_process(char **str, int *width) {
+  long double res = 0;
+  long double frac = 0.0;
+  while (**str >= '0' && **str <= '9' && *width > 0) {
+    res = res * 10 + (**str - '0');
+    (*str)++;
+    (*width)--;
+  }
+  if (**str == '.') {
+    (*str)++;
+    int frac_pow = 1;
+    while (**str >= '0' && **str <= '9' && *width > 0) {
+      frac += (long double)(**str - '0') / powl(10., frac_pow++);
+      (*str)++;
+      (*width)--;
+    }
+    res += frac;
+  }
+  return res;
+}
+
+void handle_exp(char **str, int *width, long double *res) {
+  long long exp = 0;
+  if (**str == 'e' || **str == 'E') {
+    (*str)++;
+    (*width)--;
+    if (scanf_atoi(str, *width, &exp) == 1) {
+      *res *= powl(10.0, (long double)exp);
+    }
+  }
+}
+
+int scanf_atoi(char **str, int width, long long *result) {
   int flag = 0;
   str += s21_strspn(*str, TRIM);
   int coef = check_operator(str, &width);
