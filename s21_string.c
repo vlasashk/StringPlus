@@ -166,8 +166,10 @@ s21_size_t s21_strcspn(const char *str1, const char *str2) {
 
 s21_size_t s21_strlen(const char *str) {
   s21_size_t lenght = 0;
-  for (s21_size_t i = 0; str[i]; i++) {
-    lenght++;
+  if (str) {
+    for (s21_size_t i = 0; str[i]; i++) {
+      lenght++;
+    }
   }
   return lenght;
 }
@@ -234,8 +236,12 @@ char *s21_strtok(char *str, const char *delim) {
     str += s21_strspn(str, delim);
     index = str;
   } else {
-    index += s21_strspn(index, delim);
-    str = index;
+    if (*delim == '\0') {
+      str = s21_NULL;
+    } else {
+      index += s21_strspn(index, delim);
+      str = index;
+    }
   }
   if (index != s21_NULL) {
     if (*index != '\0') {

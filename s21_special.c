@@ -2,14 +2,16 @@
 
 void *s21_to_upper(const char *str) {
   char *pointer = s21_NULL;
-  s21_size_t len = s21_strlen(str);
-  pointer = calloc((len + 1), sizeof(char));
-  if (pointer != s21_NULL) {
-    for (s21_size_t i = 0; i < len; i++) {
-      if (str[i] >= 'a' && str[i] <= 'z') {
-        pointer[i] = (char)(str[i] - 32);
-      } else {
-        pointer[i] = (char)(str[i]);
+  if (str != s21_NULL) {
+    s21_size_t len = s21_strlen(str);
+    pointer = calloc((len + 1), sizeof(char));
+    if (pointer != s21_NULL) {
+      for (s21_size_t i = 0; i < len; i++) {
+        if (str[i] >= 'a' && str[i] <= 'z') {
+          pointer[i] = (char)(str[i] - 32);
+        } else {
+          pointer[i] = (char)(str[i]);
+        }
       }
     }
   }
@@ -18,14 +20,16 @@ void *s21_to_upper(const char *str) {
 
 void *s21_to_lower(const char *str) {
   char *pointer = s21_NULL;
-  s21_size_t len = s21_strlen(str);
-  pointer = calloc((len + 1), sizeof(char));
-  if (pointer != s21_NULL) {
-    for (s21_size_t i = 0; i < len; i++) {
-      if (str[i] >= 'A' && str[i] <= 'Z') {
-        pointer[i] = (char)(str[i] + 32);
-      } else {
-        pointer[i] = (char)(str[i]);
+  if (str != s21_NULL) {
+    s21_size_t len = s21_strlen(str);
+    pointer = calloc((len + 1), sizeof(char));
+    if (pointer != s21_NULL) {
+      for (s21_size_t i = 0; i < len; i++) {
+        if (str[i] >= 'A' && str[i] <= 'Z') {
+          pointer[i] = (char)(str[i] + 32);
+        } else {
+          pointer[i] = (char)(str[i]);
+        }
       }
     }
   }
@@ -92,18 +96,20 @@ s21_size_t s21_strspn_reverse(const char *str1, const char *str2) {
   if ((str1 != NULL) && (str2 != NULL)) {
     s21_size_t str1_len = s21_strlen(str1);
     s21_size_t str2_len = s21_strlen(str2);
-    for (s21_size_t i = str1_len - 1;; i--) {
-      int flag = 0;
-      for (s21_size_t j = 0; j < str2_len; j++) {
-        if (str1[i] == str2[j]) {
-          flag = 1;
+    if (str1_len != 0) {
+      for (s21_size_t i = str1_len - 1;; i--) {
+        int flag = 0;
+        for (s21_size_t j = 0; j < str2_len; j++) {
+          if (str1[i] == str2[j]) {
+            flag = 1;
+            break;
+          }
+        }
+        if (flag != 0) {
+          len++;
+        } else {
           break;
         }
-      }
-      if (flag != 0) {
-        len++;
-      } else {
-        break;
       }
     }
   }

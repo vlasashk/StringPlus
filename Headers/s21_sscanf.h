@@ -43,5 +43,6 @@ int base_convert(char c, int base);
 int trim_hex_start(char **str, int *width, int *zero_stat);
 int any_numeral(char **str, int width, long long *result);
 int process_i(char **strPointer, specInfo *specs, va_list paramList);
+int EOF_check(const char *src);
 
 #endif //  SRC_HEADERS_S21_SSCANF_H_

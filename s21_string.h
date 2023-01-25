@@ -1,7 +1,6 @@
 #ifndef SRC_S21_STRING_H_
 #define SRC_S21_STRING_H_
 
-#include <float.h>
 #include <limits.h>
 #include <math.h>
 #include <stdarg.h>
@@ -10,6 +9,7 @@
 
 #define ONE_PAGE 4096
 #define s21_NULL ((void *)0)
+#define S21_NULL ((void *)0)
 typedef long unsigned s21_size_t;
 
 void *s21_memchr(const void *str, int c, s21_size_t n); // DONE -- TEST
@@ -21,7 +21,8 @@ void *s21_memset(void *str, int c, s21_size_t n);             // DONE
 char *s21_strcat(char *dest, const char *src);                // DONE
 char *s21_strncat(char *dest, const char *src, s21_size_t n); // DONE
 char *s21_strchr(const char *str, int c);                     // DONE
-int s21_strcmp(const char *str1, const char *str2); // DONE -- TEST 1 0 -1 or...
+int s21_strcmp(const char *str1,
+               const char *str2); // DONE -- TEST 1 0 -1 or...
 int s21_strncmp(const char *str1, const char *str2,
                 s21_size_t n);                 // DONE -- TEST 1 0 -1 or...
 char *s21_strcpy(char *dest, const char *src); // DONE
