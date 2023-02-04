@@ -2,8 +2,8 @@
 
 void *s21_memchr(const void *str, int c, s21_size_t n) {
   const unsigned char *pointer = str;
-  void *res = s21_NULL;
-  while ((pointer != s21_NULL) && ((n--) > 0)) {
+  void *res = S21_NULL;
+  while ((pointer != S21_NULL) && ((n--) > 0)) {
     if (*pointer != (unsigned char)c) {
       pointer++;
     } else {
@@ -93,7 +93,7 @@ char *s21_strncat(char *dest, const char *src, s21_size_t n) {
 
 char *s21_strchr(const char *str, int c) {
   s21_size_t length_str = s21_strlen(str);
-  char *pointer = s21_NULL;
+  char *pointer = S21_NULL;
   for (s21_size_t i = 0; i < length_str + 1; i++) {
     if (str[i] == c) {
       pointer = (char *)&str[i];
@@ -151,9 +151,9 @@ char *s21_strncpy(char *dest, const char *src, s21_size_t n) {
 
 s21_size_t s21_strcspn(const char *str1, const char *str2) {
   s21_size_t len = 0;
-  if ((str1 != s21_NULL) && (str2 != s21_NULL)) {
+  if ((str1 != S21_NULL) && (str2 != S21_NULL)) {
     while (*str1 != '\0') {
-      if (s21_strchr(str2, *str1) != s21_NULL) {
+      if (s21_strchr(str2, *str1) != S21_NULL) {
         break;
       } else {
         str1++;
@@ -174,10 +174,10 @@ s21_size_t s21_strlen(const char *str) {
   return lenght;
 }
 char *s21_strpbrk(const char *str1, const char *str2) {
-  char *pointer = s21_NULL;
-  if ((str1 != s21_NULL) && (str2 != s21_NULL)) {
+  char *pointer = S21_NULL;
+  if ((str1 != S21_NULL) && (str2 != S21_NULL)) {
     while (*str1 != '\0') {
-      if (s21_strchr(str2, *str1) != s21_NULL) {
+      if (s21_strchr(str2, *str1) != S21_NULL) {
         pointer = (char *)str1;
         break;
       } else {
@@ -189,7 +189,7 @@ char *s21_strpbrk(const char *str1, const char *str2) {
 }
 char *s21_strrchr(const char *str, int c) {
   s21_size_t length_str = s21_strlen(str);
-  char *pointer = s21_NULL;
+  char *pointer = S21_NULL;
   for (s21_size_t i = 0; i < length_str + 1; i++) {
     if (str[i] == c) {
       pointer = (char *)&str[i];
@@ -200,9 +200,9 @@ char *s21_strrchr(const char *str, int c) {
 
 s21_size_t s21_strspn(const char *str1, const char *str2) {
   s21_size_t len = 0;
-  if ((str1 != s21_NULL) && (str2 != s21_NULL)) {
+  if ((str1 != S21_NULL) && (str2 != S21_NULL)) {
     while (*str1 != '\0') {
-      if (s21_strchr(str2, *str1) == s21_NULL) {
+      if (s21_strchr(str2, *str1) == S21_NULL) {
         break;
       } else {
         str1++;
@@ -214,7 +214,7 @@ s21_size_t s21_strspn(const char *str1, const char *str2) {
 }
 
 char *s21_strstr(const char *haystack, const char *needle) {
-  char *pointer = s21_NULL;
+  char *pointer = S21_NULL;
   s21_size_t needle_len = s21_strlen(needle);
   if (needle_len == 0) {
     pointer = (char *)haystack;
@@ -231,19 +231,19 @@ char *s21_strstr(const char *haystack, const char *needle) {
 }
 
 char *s21_strtok(char *str, const char *delim) {
-  static char *index = s21_NULL;
-  if (str != s21_NULL) {
+  static char *index = S21_NULL;
+  if (str != S21_NULL) {
     str += s21_strspn(str, delim);
     index = str;
   } else {
     if (*delim == '\0') {
-      str = s21_NULL;
+      str = S21_NULL;
     } else {
       index += s21_strspn(index, delim);
       str = index;
     }
   }
-  if (index != s21_NULL) {
+  if (index != S21_NULL) {
     if (*index != '\0') {
       while (*index != '\0') {
         for (int i = 0; delim[i] != '\0'; i++) {
@@ -259,7 +259,7 @@ char *s21_strtok(char *str, const char *delim) {
         }
         if (*index == '\0') {
           if (*str == '\0') {
-            str = s21_NULL;
+            str = S21_NULL;
           }
           index++;
           break;
@@ -267,33 +267,16 @@ char *s21_strtok(char *str, const char *delim) {
         index++;
       }
     } else {
-      str = s21_NULL;
+      str = S21_NULL;
     }
   } else {
-    str = s21_NULL;
+    str = S21_NULL;
   }
   return str;
 }
 
 int s21_atoi(char *str) {
   int res = 0;
-  int coef = 1;
-  str += s21_strspn(str, TRIM);
-  if (*str == '+') {
-    str++;
-  }
-  if (*str == '-') {
-    coef = -1;
-    str++;
-  }
-  while (*str >= '0' && *str <= '9') {
-    res = res * 10 + *str++ - '0';
-  }
-  return res * coef;
-}
-
-long s21_atol(char *str) {
-  long res = 0;
   int coef = 1;
   str += s21_strspn(str, TRIM);
   if (*str == '+') {

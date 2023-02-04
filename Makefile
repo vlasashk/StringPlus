@@ -10,7 +10,7 @@ all: build
 build: test s21_string.a
 
 test: s21_string.a
-	$(CC) $(CFLAGS) Tests/*.c s21_string.a $(C_LIBS) -o test
+	$(CC) $(CFLAGS) Tests/*.c s21_string.a $(TEST_LIBS) -o test
 	./test
 
 

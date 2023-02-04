@@ -1,17 +1,23 @@
-#include "../s21_string.h"
-#include <stdio.h>
-#include <string.h>
+#include "test.h"
+
+int run_tests(Suite *test_case) {
+  int number_failed;
+  SRunner *sr = srunner_create(test_case);
+  srunner_set_fork_status(sr, CK_NOFORK);
+  srunner_run_all(sr, CK_NORMAL);
+  number_failed = srunner_ntests_failed(sr);
+  srunner_free(sr);
+  return number_failed;
+}
 
 int main() {
-  char *line = "infinity.004324Erinf";
-  // char line2[20] = "H 1 \t4\t    \n2";
-  // // s21_sprintf(line, "Hello", "Little", "Little");
-  // // s21_sscanf(line, "Hello", "Little", "Little");
-  char hel[20] = {0};
-  double w = 0;
-  double gop = 0;
-  int res = sscanf(line, "%lf \t\t%lf%s", &w, &gop, hel);
-  printf("%lf|\n%lf|\n%s|\n", w, gop, hel);
-  printf("res: %d\n", res);
-  return 0;
+  int number_failed = 0;
+  Suite *suites_list[] = {sscanf_suite(), string_suite(), special_suite(),
+                          sprintf_suite(), NULL};
+  for (Suite **current = suites_list; *current != NULL; current++) {
+    printf("_________________________________________\n");
+    number_failed += run_tests(*current);
+  }
+
+  return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

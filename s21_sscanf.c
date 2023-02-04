@@ -37,7 +37,7 @@ int s21_sscanf(const char *str, const char *format, ...) {
       if (*strPointer == *formatPointer && *formatPointer != ' ') {
         strPointer++;
         formatPointer++;
-      } else if (s21_strchr(TRIM, *formatPointer) != s21_NULL) {
+      } else if (s21_strchr(TRIM, *formatPointer) != S21_NULL) {
         formatPointer = trim_start(formatPointer);
         strPointer = trim_start(strPointer);
       } else {
@@ -108,7 +108,7 @@ void check_lenArg(specInfo *specs, char **format) {
 
 int spec_validation(char c) {
   int flag = 0;
-  if (s21_strchr(OPT, c) != s21_NULL) {
+  if (s21_strchr(OPT, c) != S21_NULL) {
     flag = 1;
   }
   return flag;
@@ -117,7 +117,7 @@ int spec_validation(char c) {
 int spec_processing(char **strPointer, specInfo *specs, va_list paramList,
                     const char *str) {
   int res = 0;
-  if (strPointer != s21_NULL) {
+  if (strPointer != S21_NULL) {
     switch (specs->specArg) {
     case 'c':
       res = process_c(strPointer, specs, paramList);
@@ -208,7 +208,7 @@ int process_s(char **strPointer, specInfo *specs, va_list paramList) {
     if (specs->skip != 1) {
       char *temp = va_arg(paramList, char *);
       while (**strPointer && specs->widthArg > 0 &&
-             s21_strchr(TRIM, **strPointer) == s21_NULL) {
+             s21_strchr(TRIM, **strPointer) == S21_NULL) {
         *temp++ = **strPointer;
         (*strPointer)++;
         specs->widthArg--;
@@ -217,7 +217,7 @@ int process_s(char **strPointer, specInfo *specs, va_list paramList) {
       specs->success = 1;
     } else {
       while (**strPointer && specs->widthArg > 0 &&
-             s21_strchr(TRIM, **strPointer) == s21_NULL) {
+             s21_strchr(TRIM, **strPointer) == S21_NULL) {
         (*strPointer)++;
         specs->widthArg--;
       }
@@ -415,7 +415,7 @@ int base_check(char c, int base) {
 int process_n(char **strPointer, specInfo *specs, va_list paramList,
               const char *str) {
   int res = 0;
-  if (strPointer != s21_NULL) {
+  if (strPointer != S21_NULL) {
     if (specs->skip != 1) {
       switch (specs->lenArg) {
       case 'h':

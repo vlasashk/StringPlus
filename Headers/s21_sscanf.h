@@ -45,4 +45,4 @@ int any_numeral(char **str, int width, long long *result);
 int process_i(char **strPointer, specInfo *specs, va_list paramList);
 int EOF_check(const char *src);
 
-#endif //  SRC_HEADERS_S21_SSCANF_H_
+#endif  //  SRC_HEADERS_S21_SSCANF_H_

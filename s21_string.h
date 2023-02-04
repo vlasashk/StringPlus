@@ -8,9 +8,12 @@
 #include <stdlib.h>
 
 #define ONE_PAGE 4096
-#define s21_NULL ((void *)0)
 #define S21_NULL ((void *)0)
 typedef long unsigned s21_size_t;
+#define s21_isNan(x) __builtin_isnan(x)
+
+#include "Headers/s21_sprintf.h"
+#include "Headers/s21_sscanf.h"
 
 void *s21_memchr(const void *str, int c, s21_size_t n); // DONE -- TEST
 int s21_memcmp(const void *str1, const void *str2,
@@ -35,7 +38,7 @@ char *s21_strpbrk(const char *str1, const char *str2);      // DONE
 char *s21_strrchr(const char *str, int c);                  // DONE
 s21_size_t s21_strspn(const char *str1, const char *str2);  // DONE
 char *s21_strstr(const char *haystack, const char *needle); // DONE -- TEST
-char *s21_strtok(char *str, const char *delim);             // WTF NEEDS CHECK
+char *s21_strtok(char *str, const char *delim);             // DONE
 
 void *s21_to_upper(const char *str);
 void *s21_to_lower(const char *str);
@@ -44,8 +47,5 @@ void *s21_trim(const char *src, const char *trim_chars);
 s21_size_t s21_strspn_reverse(const char *str1, const char *str2);
 int s21_atoi(char *str);
 long s21_atol(char *str);
-
-#include "Headers/s21_sprintf.h"
-#include "Headers/s21_sscanf.h"
 
 #endif //  SRC_S21_STRING_H_

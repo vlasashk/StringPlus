@@ -1,1 +1,7 @@
-.ccls-cache/
+.ccls*
+.b*
+.g*
+.re*
+replit.nix
+src/test.dSYM
+src/.DS*
