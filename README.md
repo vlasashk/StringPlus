@@ -14,7 +14,11 @@ git clone https://github.com/vlasashk/StringPlus.git
 cd StringPlus/
 make
 ```
+To generate HTML with information about code test coverage (lcov)
 
+```
+make gcov_report
+```
 ## Project information
 ### string.h Types
 
